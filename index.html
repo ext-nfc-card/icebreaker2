@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Powered by LINKSPHERE</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  body { background: #0ea5e9; display: flex; justify-content: center; min-height: 100dvh; }
+  .phone {
+    width: 100%; max-width: 430px; min-height: 100dvh;
+    background: #7dd3fc; /* SKY BLUE */
+    display: flex; flex-direction: column;
+    padding: 16px 16px 18px; position: relative; overflow: hidden;
+  }
+  .phone::before { content:""; position:absolute; width:220px; height:220px; border-radius:50%; background:#bae6fd; opacity:.7; top:-60px; left:-60px; }
+  .phone::after { content:""; position:absolute; width:200px; height:200px; border-radius:50%; background:#bae6fd; opacity:.6; bottom:120px; right:-70px; }
+  header, section, footer { position: relative; z-index: 2; }
+  header { text-align:center; padding-top:6px; font-size:11px; font-weight:700; letter-spacing:.08em; color:#0c4a6e; }
+  header b { font-weight:900; color:#082f49; letter-spacing:.12em; }
+
+  /* QUESTION - gitna ng screen */
+  .question-card {
+    background:#fff; border-radius:24px; padding:22px 18px;
+    box-shadow:0 10px 0 rgba(12,74,110,.15); text-align:center;
+    min-height:170px; display:flex; align-items:center; justify-content:center;
+  }
+  .question-card h1 { font-size:22px; line-height:1.35; color:#082f49; }
+
+  .status { min-height:74px; display:flex; align-items:center; justify-content:center; text-align:center; margin-top:12px; }
+  .status-box { width:100%; border-radius:16px; padding:12px; font-weight:800; color:#fff; }
+  .status-box.green { background:#16a34a; }
+  .status-box.red { background:#dc2626; }
+  .status-box.amber { background:#f59e0b; color:#082f49; }
+  .status-box.info { color:#0c4a6e; font-size:14px; }
+
+  /* CHOICES - nasa baba */
+  .choices { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+  .choice {
+    width:100%; text-align:left; background:#fff; border:3px solid #fff;
+    border-radius:16px; padding:16px 14px; font-size:16px; font-weight:700; color:#082f49;
+    cursor:pointer; box-shadow:0 4px 0 rgba(12,74,110,.15); display:flex; gap:10px; align-items:center;
+  }
+  .choice:active { transform:scale(.98); }
+  .choice:disabled { opacity:.9; cursor:default; }
+  .choice .letter { width:30px; height:30px; flex:0 0 30px; border-radius:50%; background:#e0f2fe; display:flex; align-items:center; justify-content:center; font-weight:900; }
+  .choice.correct { background:#22c55e !important; color:#fff; border-color:#16a34a; }
+  .choice.correct .letter { background:#fff; color:#16a34a; }
+  .choice.wrong { background:#ef4444 !important; color:#fff; border-color:#b91c1c; }
+  .choice.wrong .letter { background:#fff; color:#dc2626; }
+
+  .actions { display:flex; gap:10px; margin-top:12px; }
+  .btn { flex:1; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:900; cursor:pointer; }
+  .btn-steal { background:#facc15; color:#082f49; box-shadow:0 4px 0 rgba(0,0,0,.2); }
+  .btn-again { background:#082f49; color:#fff; }
+
+  /* TIMER - pinakababa */
+  footer { margin-top:auto; padding-top:14px; }
+  .timer-top { display:flex; justify-content:space-between; align-items:center; font-weight:900; color:#082f49; margin-bottom:6px; }
+  .timer-top span:last-child { font-size:22px; }
+  .timer-bar { height:12px; background:rgba(255,255,255,.7); border-radius:999px; overflow:hidden; }
+  .timer-fill { height:100%; width:100%; background:#082f49; border-radius:999px; transition:width .3s linear; }
+  .timer-fill.low { background:#dc2626; }
+  .hint { text-align:center; font-size:12px; font-weight:700; color:#0c4a6e; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>Powered by <b>LINKSPHERE</b></header>
+
+  <div class="badge-wrap"><div class="badge">⭐ 2x</div></div>
+
+  <!-- QUESTION - nasa gitna -->
+  <section>
+    <div class="question-card"><h1 id="questionText"></h1></div>
+    <div class="status"><div id="statusBox" class="status-box info">Tap one answer.</div></div>
+
+    <!-- CHOICES - nasa baba -->
+    <div class="choices" id="choices"></div>
+
+    <div class="actions">
+      <button id="stealBtn" class="btn btn-steal" style="display:none;">🔥 STEAL</button>
+      <button id="againBtn" class="btn btn-again" style="display:none;">↻ Play Again</button>
+    </div>
+  </section>
+
+  <!-- TIMER - pinakababa, 15 seconds -->
+  <footer>
+    <div class="timer-top"><span>⏱ TIME LEFT</span><span id="timerText">15s</span></div>
+    <div class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
+    <div class="hint">First player = 2x points &nbsp;•&nbsp; Steal = second player can steal</div>
+  </footer>
+</div>
+
+<script>
+// ============================================================
+//  👉 DITO KA MAG-EDIT! LINE 118 - 125 LANG!
+//  Gusto mo palitan yung question? Dito lang, huwag na sa iba.
+//  1. Palitan yung question
+//  2. Palitan yung 4 choices
+//  3. Palitan yung correctIndex: 0 = A, 1 = B, 2 = C, 3 = D
+// ============================================================
+const GAME = {
+  question: "When global temperatures rise, what happens to glaciers?",
+  choices: [
+    "They grow bigger",
+    "They melt faster",
+    "PAX SILICA",
+    "DAHAN",
+  ],
+  correctIndex: 1 // <-- 1 means B ang tama. Gawin 0 kung A, 2 kung C, 3 kung D
+};
+// ============================================================
+//  HANGGANG DITO LANG ANG I-EDIT MO. Huwag galawin sa baba.
+// ============================================================
+
+const questionEl = document.getElementById('questionText');
+const choicesEl = document.getElementById('choices');
+const statusBox = document.getElementById('statusBox');
+const stealBtn = document.getElementById('stealBtn');
+const againBtn = document.getElementById('againBtn');
+const timerText = document.getElementById('timerText');
+const timerFill = document.getElementById('timerFill');
+
+let timeLeft = 15;
+let timerId = null;
+let phase = 'first'; // 'first' | 'steal' | 'done'
+let triedWrongIndex = -1;
+
+function playScatterSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // sparkly scatter: mabilis na sunod-sunod na coin / sparkle notes
+    [880, 1174, 1568, 2093, 1568, 2093].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, now + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.18, now + i * 0.08 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.18);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now + i * 0.08); o.stop(now + i * 0.08 + 0.2);
+    });
+  } catch(e) {}
+}
+// Try on open + on first tap (browser rule)
+playScatterSound();
+document.addEventListener('pointerdown', () => playScatterSound(), { once: true });
+
+function setStatus(text, cls) {
+  statusBox.textContent = text;
+  statusBox.className = 'status-box ' + cls;
+}
+
+function renderChoices() {
+  choicesEl.innerHTML = '';
+  GAME.choices.forEach((choice, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<span class="letter">${['A','B','C','D'][idx]}</span><span>${choice}</span>`;
+    btn.onclick = () => answer(idx, btn);
+    // pag steal, yung maling nasagot dati naka-disable pa rin
+    if (idx === triedWrongIndex) { btn.disabled = true; btn.classList.add('wrong'); }
+    choicesEl.appendChild(btn);
+  });
+}
+
+function startTimer() {
+  stopTimer();
+  timeLeft = 15;
+  updateTimerUI();
+  timerId = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) {
+      stopTimer();
+      onTimeout();
+    }
+  }, 1000);
+}
+function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+function updateTimerUI() {
+  timerText.textContent = timeLeft + 's';
+  timerFill.style.width = (timeLeft / 15 * 100) + '%';
+  timerFill.classList.toggle('low', timeLeft <= 5);
+}
+
+function lockChoices() {
+  [...choicesEl.children].forEach(b => b.disabled = true);
+}
+
+function answer(idx, btn) {
+  if (phase === 'done') return;
+  stopTimer();
+  const isCorrect = idx === GAME.correctIndex;
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    lockChoices();
+    phase = 'done';
+    if (phase === 'done' && arguments.length) {}
+    if (window._wasSteal) {
+      setStatus('STOLEN! +2x Points! 🔥', 'green');
+    } else {
+      setStatus('Correct! +2x Points! 🎉', 'green');
+    }
+    // highlight correct even if steal mode
+    playScatterSound();
+    againBtn.style.display = 'block';
+    stealBtn.style.display = 'none';
+    return;
+  }
+
+  // WRONG
+  btn.classList.add('wrong');
+  triedWrongIndex = idx;
+  if (phase === 'first') {
+    phase = 'waiting-steal';
+    lockChoices();
+    setStatus('Oops! Wrong answer. Someone can STEAL!', 'red');
+    stealBtn.style.display = 'block';
+  } else {
+    // steal round wrong na rin
+    phase = 'done';
+    lockChoices();
+    // ipakita yung tama
+    choicesEl.children[GAME.correctIndex].classList.add('correct');
+    setStatus('No steal - correct answer revealed!', 'amber');
+    againBtn.style.display = 'block';
+    stealBtn.style.display = 'none';
+  }
+}
+
+function onTimeout() {
+  if (phase === 'first') {
+    phase = 'waiting-steal';
+    lockChoices();
+    setStatus("Time's Up! Someone can STEAL!", 'amber');
+    stealBtn.style.display = 'block';
+  } else if (phase === 'steal') {
+    phase = 'done';
+    lockChoices();
+    choicesEl.children[GAME.correctIndex].classList.add('correct');
+    setStatus('Steal time over - correct answer revealed!', 'amber');
+    againBtn.style.display = 'block';
+    stealBtn.style.display = 'none';
+  }
+}
+
+stealBtn.onclick = () => {
+  phase = 'steal';
+  window._wasSteal = true;
+  stealBtn.style.display = 'none';
+  setStatus('STEAL TIME! Second player, your turn!', 'amber');
+  // re-enable maliban sa maling nasagot na
+  [...choicesEl.children].forEach((b, i) => {
+    if (i !== triedWrongIndex) b.disabled = false;
+  });
+  startTimer();
+};
+
+againBtn.onclick = () => {
+  phase = 'first';
+  window._wasSteal = false;
+  triedWrongIndex = -1;
+  stealBtn.style.display = 'none';
+  againBtn.style.display = 'none';
+  setStatus('Tap one answer.', 'info');
+  renderChoices();
+  startTimer();
+};
+
+// START - diretso sa question, walang lobby
+questionEl.textContent = GAME.question;
+renderChoices();
+setStatus('Tap one answer.', 'info');
+startTimer();
+</script>
+</body>
+</html>
