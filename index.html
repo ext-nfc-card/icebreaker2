@@ -88,7 +88,7 @@
   <footer>
     <div class="timer-top"><span>⏱ TIME LEFT</span><span id="timerText">15s</span></div>
     <div class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
-    <div class="hint">First player = 2x points &nbsp;•&nbsp; Steal = second player can steal</div>
+    <div class="hint">First player &nbsp;•&nbsp; Steal </div>
   </footer>
 </div>
 
@@ -202,9 +202,9 @@ function answer(idx, btn) {
     phase = 'done';
     if (phase === 'done' && arguments.length) {}
     if (window._wasSteal) {
-      setStatus('STOLEN! +2x Points! 🔥', 'green');
+      setStatus('STOLEN!', 'green');
     } else {
-      setStatus('Correct! +2x Points! 🎉', 'green');
+      setStatus('Correct!', 'green');
     }
     // highlight correct even if steal mode
     playScatterSound();
